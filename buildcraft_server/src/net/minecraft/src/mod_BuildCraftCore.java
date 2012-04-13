@@ -30,13 +30,6 @@ public class mod_BuildCraftCore extends NetworkMod {
 		BuildCraftCore.initialize ();
 	}
 
-	@Override
-	public void modsLoaded () {
-		mod_BuildCraftCore.initialize();
-		BuildCraftCore.initializeModel(this);
-		ModLoader.setInGameHook(this, true, true);
-	}
-
 	public static String version() {
 		return DefaultProps.VERSION;
 	}
@@ -67,6 +60,9 @@ public class mod_BuildCraftCore extends NetworkMod {
 	@Override
 	public void load() {
 		BuildCraftCore.load();
+		mod_BuildCraftCore.initialize();
+        BuildCraftCore.initializeModel(this);
+        ModLoader.setInGameHook(this, true, true);
 	}
 
 	@Override public boolean clientSideRequired() { return true; }

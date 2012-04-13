@@ -24,6 +24,8 @@ public class mod_BuildCraftBuilders extends NetworkMod {
 	@Override
 	public void load () {
 		BuildCraftBuilders.load();
+		BuildCraftBuilders.initialize();
+        
 	}
 
 	@Override
@@ -31,7 +33,6 @@ public class mod_BuildCraftBuilders extends NetworkMod {
 		super.modsLoaded();
 
 		BuildCraftBuilders.addHook(new ClientBuilderHook());
-		BuildCraftBuilders.initialize();
 		//CoreProxy.registerGUI(this, Utils.packetIdToInt(PacketIds.FillerGUI));
 		//CoreProxy.registerGUI(this, Utils.packetIdToInt(PacketIds.TemplateGUI));
 		//CoreProxy.registerGUI(this, Utils.packetIdToInt(PacketIds.BuilderGUI));

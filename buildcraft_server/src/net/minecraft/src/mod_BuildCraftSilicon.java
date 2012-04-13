@@ -22,16 +22,6 @@ public class mod_BuildCraftSilicon extends NetworkMod {
 		instance = this;
 	}
 
-	@Override
-	public void modsLoaded () {
-		super.modsLoaded();
-
-		BuildCraftTransport.initialize();
-		BuildCraftSilicon.initialize();
-
-		BuildCraftSilicon.initializeModel(this);
-	}
-
 	/*
 	@Override
 	public void handlePacket(Packet230ModLoader packet, EntityPlayerMP entityplayermp) {
@@ -70,6 +60,10 @@ public class mod_BuildCraftSilicon extends NetworkMod {
 	@Override
 	public void load() {
 		BuildCraftSilicon.load();
+		BuildCraftTransport.initialize();
+        BuildCraftSilicon.initialize();
+
+        BuildCraftSilicon.initializeModel(this);
 	}
 
 	@Override public boolean clientSideRequired() { return true; }

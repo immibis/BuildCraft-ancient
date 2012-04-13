@@ -26,7 +26,7 @@ public class TextureOilFlowFX extends TextureFX
 
     public TextureOilFlowFX()
     {
-        super(BuildCraftEnergy.oilMoving.blockIndexInTexture + 1);
+        super(12*16 + 14); //BuildCraftEnergy.oilStill.blockIndexInTexture + 1
 
 		try {
 			Class <? extends Object> sizeClass = Class

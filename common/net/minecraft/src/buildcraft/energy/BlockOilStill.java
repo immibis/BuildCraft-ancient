@@ -9,6 +9,7 @@
 
 package net.minecraft.src.buildcraft.energy;
 
+import net.minecraft.src.Block;
 import net.minecraft.src.BlockStationary;
 import net.minecraft.src.BuildCraftCore;
 import net.minecraft.src.BuildCraftEnergy;
@@ -28,6 +29,25 @@ public class BlockOilStill extends BlockStationary implements ITextureProvider, 
 	 public int getRenderType() {
 		 return BuildCraftCore.oilModel;
 	 }
+	
+	// Required to allow oilStill.blockID != oilMoving.blockID + 1
+	@Override
+	public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5)
+    {
+        if (par1World.getBlockId(par2, par3, par4) == this.blockID)
+        {
+            this.setNotStationary(par1World, par2, par3, par4);
+        }
+    }
+	private void setNotStationary(World par1World, int par2, int par3, int par4)
+    {
+        int var5 = par1World.getBlockMetadata(par2, par3, par4);
+        par1World.editingBlocks = true;
+        par1World.setBlockAndMetadata(par2, par3, par4, BuildCraftEnergy.oilMoving.blockID, var5);
+        par1World.markBlocksDirty(par2, par3, par4, par2, par3, par4);
+        par1World.scheduleBlockUpdate(par2, par3, par4, BuildCraftEnergy.oilMoving.blockID, this.tickRate());
+        par1World.editingBlocks = false;
+    }
 	 
 	@Override
 	public String getTextureFile() {

@@ -35,6 +35,7 @@ import net.minecraft.src.buildcraft.core.RenderEntityBlock;
 import net.minecraft.src.buildcraft.core.RenderLaser;
 import net.minecraft.src.buildcraft.core.RenderRobot;
 import net.minecraft.src.buildcraft.core.Utils;
+import net.minecraft.src.forge.MinecraftForge;
 import net.minecraft.src.forge.MinecraftForgeClient;
 import net.minecraft.src.forge.NetworkMod;
 
@@ -71,7 +72,7 @@ public class mod_BuildCraftCore extends NetworkMod {
 		int damage;
 	}
 
-	public static HashMap<EntityRenderIndex, IInventoryRenderer> blockByEntityRenders = new HashMap<EntityRenderIndex, IInventoryRenderer>();
+	public static HashMap<EntityRenderIndex, IInventoryRenderer> blockByEntityRenders = null;
 
 	public static boolean initialized = false;
 
@@ -81,6 +82,12 @@ public class mod_BuildCraftCore extends NetworkMod {
 
 	public static void initialize() {
 		BuildCraftCore.initialize();
+		
+		MinecraftForge.addRecipeResetCallback(new Runnable() {
+		    public void run() {
+		        blockByEntityRenders = new HashMap<EntityRenderIndex, IInventoryRenderer>();
+		    }
+		});
 
 		if (!initialized) {
 			initializeMarkerMatrix();
@@ -98,7 +105,6 @@ public class mod_BuildCraftCore extends NetworkMod {
 
 	@Override
 	public void modsLoaded() {
-		mod_BuildCraftCore.initialize();
 		BuildCraftCore.initializeModel(this);
 		ModLoader.setInGameHook(this, true, true);
 	}
@@ -836,6 +842,7 @@ public class mod_BuildCraftCore extends NetworkMod {
 	@Override
 	public void load() {
 		BuildCraftCore.load();
+		mod_BuildCraftCore.initialize();
 	}
 
 	@Override public boolean clientSideRequired() { return true; }

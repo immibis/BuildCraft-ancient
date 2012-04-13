@@ -43,7 +43,7 @@ public class BlockOilFlowing extends BlockFluid implements ITextureProvider, ILi
     private void func_30003_j(World world, int i, int j, int k)
     {
         int l = world.getBlockMetadata(i, j, k);
-        world.setBlockAndMetadata(i, j, k, blockID + 1, l);
+        world.setBlockAndMetadata(i, j, k, BuildCraftEnergy.oilStill.blockID, l);
         world.markBlocksDirty(i, j, k, i, j, k);
         world.markBlockNeedsUpdate(i, j, k);
     }

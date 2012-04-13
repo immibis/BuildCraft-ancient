@@ -504,7 +504,7 @@ public class BlockGenericPipe extends BlockContainer implements
 	public static TreeMap<BlockIndex, Pipe> pipeRemoved = new TreeMap<BlockIndex, Pipe>();
 
 	public static Item registerPipe (int key, Class <? extends Pipe> clas) {
-		Item item = new ItemPipe (key);
+		Item item = new ItemPipe (key - 256);
 
 		pipes.put(item.shiftedIndex, clas);
 

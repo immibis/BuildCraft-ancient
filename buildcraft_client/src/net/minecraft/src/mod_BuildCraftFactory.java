@@ -21,6 +21,7 @@ import net.minecraft.src.buildcraft.factory.RenderRefinery;
 import net.minecraft.src.buildcraft.factory.RenderTank;
 import net.minecraft.src.buildcraft.factory.TileRefinery;
 import net.minecraft.src.buildcraft.factory.TileTank;
+import net.minecraft.src.forge.MinecraftForge;
 import net.minecraft.src.forge.NetworkMod;
 
 public class mod_BuildCraftFactory extends NetworkMod {
@@ -32,8 +33,8 @@ public class mod_BuildCraftFactory extends NetworkMod {
 	}
 
 	@Override
-	public void modsLoaded () {
-		super.modsLoaded();
+	public void load () {
+	    BuildCraftFactory.load();
 
 		BuildCraftFactory.initialize();
 
@@ -48,8 +49,12 @@ public class mod_BuildCraftFactory extends NetworkMod {
 				"net.minecraft.src.buildcraft.factory.Refinery",
 				new RenderRefinery());
 
-		mod_BuildCraftCore.blockByEntityRenders.put(new EntityRenderIndex(
-				BuildCraftFactory.refineryBlock, 0), new RenderRefinery());
+		MinecraftForge.addRecipeCallback(new Runnable() {
+		    public void run() {
+		        mod_BuildCraftCore.blockByEntityRenders.put(new EntityRenderIndex(
+		                BuildCraftFactory.refineryBlock, 0), new RenderRefinery());
+		    }
+		});
 
 		//Detect the presence of NEI and add overlay for the Autocrafting Table
 		try {
@@ -89,11 +94,6 @@ public class mod_BuildCraftFactory extends NetworkMod {
     	}
     }
     */
-
-	@Override
-	public void load() {
-		BuildCraftFactory.load();
-	}
 
 	@Override public boolean clientSideRequired() { return true; }
 	@Override public boolean serverSideRequired() { return true; }

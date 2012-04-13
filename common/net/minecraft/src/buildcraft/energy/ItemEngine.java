@@ -31,7 +31,7 @@ public class ItemEngine extends ItemBlock
     @SuppressWarnings({ "all" })
     public String getItemNameIS(ItemStack itemstack)
     {
-    	if (itemstack.getItemDamage() == 0) {
+        if (itemstack.getItemDamage() == 0) {
     		return "tile.engineWood";
     	} else if (itemstack.getItemDamage() == 1) {
     		return "tile.engineStone";

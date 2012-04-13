@@ -19,14 +19,6 @@ public class mod_BuildCraftFactory extends NetworkMod {
 	public mod_BuildCraftFactory() {
 		instance = this;
 	}
-
-	@Override
-	public void modsLoaded () {
-		super.modsLoaded();
-
-		BuildCraftFactory.initialize();
-	}
-
 	@Override
 	public String getVersion() {
 		return DefaultProps.VERSION;
@@ -35,6 +27,7 @@ public class mod_BuildCraftFactory extends NetworkMod {
 	@Override
 	public void load() {
 		BuildCraftFactory.load();
+		BuildCraftFactory.initialize();
 	}
 
 	@Override public boolean clientSideRequired() { return true; }

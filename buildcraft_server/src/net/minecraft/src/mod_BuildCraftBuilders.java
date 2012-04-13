@@ -23,12 +23,6 @@ public class mod_BuildCraftBuilders extends NetworkMod {
 	@Override
 	public void load() {
 		BuildCraftBuilders.load();
-	}
-
-	@Override
-	public void modsLoaded () {
-		super.modsLoaded();
-
 		BuildCraftBuilders.initialize();
 	}
 

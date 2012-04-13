@@ -16,7 +16,10 @@ import net.minecraft.src.forge.ITextureProvider;
 public class ItemBucketOil extends ItemBucket implements ITextureProvider {
 
 	public ItemBucketOil(int i) {
-		super(i, BuildCraftEnergy.oilMoving.blockID);
+	    // Hack: The full liquid ID can't be set here because oilMoving might
+	    // not be assigned - so we create the item with 0 and then set it
+	    // later through reflection
+		super(i, 0);
 		iconIndex = 0 * 16 + 1;
 	}
 

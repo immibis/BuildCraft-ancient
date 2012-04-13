@@ -25,10 +25,10 @@ public class mod_BuildCraftSilicon extends NetworkMod {
 	}
 
 	@Override
-	public void modsLoaded () {
-		super.modsLoaded();
-
+	public void load () {
+		
 		//CoreProxy.registerGUI(this, Utils.packetIdToInt(PacketIds.AssemblyTableGUI));
+	    BuildCraftSilicon.load();
 
 		BuildCraftTransport.initialize();
 		BuildCraftSilicon.initialize();
@@ -176,12 +176,6 @@ public class mod_BuildCraftSilicon extends NetworkMod {
 		renderblocks.renderSouthFace(block, 0.0D, 0.0D, 0.0D,
 				block.getBlockTextureFromSideAndMetadata(5, i));
 		tessellator.draw();
-	}
-
-
-	@Override
-	public void load() {
-		BuildCraftSilicon.load();
 	}
 
 	/*

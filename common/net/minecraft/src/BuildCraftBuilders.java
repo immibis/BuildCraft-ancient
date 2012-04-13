@@ -63,6 +63,7 @@ import net.minecraft.src.buildcraft.core.CoreProxy;
 import net.minecraft.src.buildcraft.core.DefaultProps;
 import net.minecraft.src.buildcraft.core.WorldIteratorRadius;
 import net.minecraft.src.forge.Configuration;
+import net.minecraft.src.forge.IIDCallback;
 import net.minecraft.src.forge.MinecraftForge;
 import net.minecraft.src.forge.Property;
 
@@ -90,8 +91,12 @@ public class BuildCraftBuilders {
 
 	public static void load() {
 
-		// Create filler registry
-		FillerManager.registry = new FillerRegistry();
+		MinecraftForge.addRecipeResetCallback(new Runnable() {
+		    public void run() {
+		        // Create filler registry
+		        FillerManager.registry = new FillerRegistry();
+		    }
+		});
 
 		// Register gui handler
 		MinecraftForge.setGuiHandler(mod_BuildCraftBuilders.instance, new GuiHandler());
@@ -104,63 +109,83 @@ public class BuildCraftBuilders {
 			initialized = true;
 
 		mod_BuildCraftCore.initialize();
-		BuildCraftCore.initializeGears();
-
-		Property templateItemId = BuildCraftCore.mainConfiguration
-				.getOrCreateIntProperty("templateItem.id", Configuration.CATEGORY_ITEM,
-						DefaultProps.TEMPLATE_ITEM_ID);
-		Property blueprintItemId = BuildCraftCore.mainConfiguration
-		.getOrCreateIntProperty("blueprintItem.id", Configuration.CATEGORY_ITEM,
-				DefaultProps.BLUEPRINT_ITEM_ID);
-		Property markerId = BuildCraftCore.mainConfiguration
-				.getOrCreateBlockIdProperty("marker.id", DefaultProps.MARKER_ID);
-		Property pathMarkerId = BuildCraftCore.mainConfiguration
-		.getOrCreateBlockIdProperty("pathMarker.id", DefaultProps.PATH_MARKER_ID);
-		Property fillerId = BuildCraftCore.mainConfiguration
-				.getOrCreateBlockIdProperty("filler.id", DefaultProps.FILLER_ID);
-		Property builderId = BuildCraftCore.mainConfiguration
-				.getOrCreateBlockIdProperty("builder.id",
-						DefaultProps.BUILDER_ID);
-		Property architectId = BuildCraftCore.mainConfiguration
-				.getOrCreateBlockIdProperty("architect.id",
-						DefaultProps.ARCHITECT_ID);
-		Property libraryId = BuildCraftCore.mainConfiguration
-				.getOrCreateBlockIdProperty("blueprintLibrary.id",
-						DefaultProps.BLUEPRINT_LIBRARY_ID);
-
-		BuildCraftCore.mainConfiguration.save();
-
-		templateItem = new ItemBptTemplate (Integer.parseInt(templateItemId.value));
-		templateItem.setItemName("templateItem");
-		CoreProxy.addName(templateItem, "Template");
-
-		blueprintItem = new ItemBptBluePrint(Integer.parseInt(blueprintItemId.value));
-		blueprintItem.setItemName("blueprintItem");
-		CoreProxy.addName(blueprintItem, "Blueprint");
-
-		markerBlock = new BlockMarker(Integer.parseInt(markerId.value));
-		CoreProxy.registerBlock(markerBlock);
-		CoreProxy.addName(markerBlock.setBlockName("markerBlock"), "Land Mark");
-
-		pathMarkerBlock = new BlockPathMarker(Integer.parseInt(pathMarkerId.value));
-		CoreProxy.registerBlock(pathMarkerBlock);
-		CoreProxy.addName(pathMarkerBlock.setBlockName("pathMarkerBlock"), "Path Mark");
-
-		fillerBlock = new BlockFiller(Integer.parseInt(fillerId.value));
-		CoreProxy.registerBlock(fillerBlock);
-		CoreProxy.addName(fillerBlock.setBlockName("fillerBlock"), "Filler");
-
-		builderBlock = new BlockBuilder(Integer.parseInt(builderId.value));
-		CoreProxy.registerBlock(builderBlock);
-		CoreProxy.addName(builderBlock.setBlockName("builderBlock"), "Builder");
-
-		architectBlock = new BlockArchitect(Integer.parseInt(architectId.value));
-		CoreProxy.registerBlock(architectBlock);
-		CoreProxy.addName(architectBlock.setBlockName("architectBlock"), "Architect Table");
-
-		libraryBlock = new BlockBlueprintLibrary(Integer.parseInt(libraryId.value));
-		CoreProxy.registerBlock(libraryBlock);
-		CoreProxy.addName(libraryBlock.setBlockName("libraryBlock"), "Blueprint Library");
+		
+		IIDCallback idc = new IIDCallback() {
+            
+            @Override
+            public void unregister(String name, int id) {
+                Item.itemsList[id] = null;
+            }
+            
+            @Override
+            public void register(String name, int id) {
+                
+                if(name.equals("templateItem")) {
+                    templateItem = new ItemBptTemplate(id - 256);
+                    templateItem.setItemName("templateItem");
+                    CoreProxy.addName(templateItem, "Template");
+                
+                } else if(name.equals("blueprintItem")) {
+                    blueprintItem = new ItemBptBluePrint(id - 256);
+                    blueprintItem.setItemName("blueprintItem");
+                    CoreProxy.addName(blueprintItem, "Blueprint");
+                }
+            }
+        };
+        
+        MinecraftForge.registerItemID(mod_BuildCraftBuilders.instance, "templateItem", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftBuilders.instance, "blueprintItem", idc);
+        
+        idc = new IIDCallback() {
+            
+            @Override
+            public void unregister(String name, int id) {
+                Block.blocksList[id] = null;
+                Item.itemsList[id] = null;
+            }
+            
+            @Override
+            public void register(String name, int id) {
+                if(name.equals("marker")) {
+                    markerBlock = new BlockMarker(id);
+                    CoreProxy.registerBlock(markerBlock);
+                    CoreProxy.addName(markerBlock.setBlockName("markerBlock"), "Land Mark");
+                    
+                } else if(name.equals("pathMarker")) {
+                    pathMarkerBlock = new BlockPathMarker(id);
+                    CoreProxy.registerBlock(pathMarkerBlock);
+                    CoreProxy.addName(pathMarkerBlock.setBlockName("pathMarkerBlock"), "Path Mark");
+                    
+                } else if(name.equals("filler")) {
+                    fillerBlock = new BlockFiller(id);
+                    CoreProxy.registerBlock(fillerBlock);
+                    CoreProxy.addName(fillerBlock.setBlockName("fillerBlock"), "Filler");
+                    
+                } else if(name.equals("builder")) {
+                    builderBlock = new BlockBuilder(id);
+                    CoreProxy.registerBlock(builderBlock);
+                    CoreProxy.addName(builderBlock.setBlockName("builderBlock"), "Builder");
+                    
+                } else if(name.equals("architect")) {
+                    architectBlock = new BlockArchitect(id);
+                    CoreProxy.registerBlock(architectBlock);
+                    CoreProxy.addName(architectBlock.setBlockName("architectBlock"), "Architect Table");
+                    
+                } else if(name.equals("library")) {
+                    libraryBlock = new BlockBlueprintLibrary(id);
+                    CoreProxy.registerBlock(libraryBlock);
+                    CoreProxy.addName(libraryBlock.setBlockName("libraryBlock"), "Blueprint Library");
+                    
+                }
+            }
+        };
+        
+        MinecraftForge.registerBlockID(mod_BuildCraftBuilders.instance, "marker", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftBuilders.instance, "pathMarker", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftBuilders.instance, "filler", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftBuilders.instance, "builder", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftBuilders.instance, "architect", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftBuilders.instance, "library", idc);
 
 		CoreProxy.registerTileEntity(TileMarker.class, "Marker");
 		CoreProxy.registerTileEntity(TileFiller.class, "Filler");
@@ -173,33 +198,41 @@ public class BuildCraftBuilders {
 		CoreProxy.registerTileEntity(TileBlueprintLibrary.class,
 		"net.minecraft.src.builders.TileBlueprintLibrary");
 
-		/// INIT FILLER PATTERNS
-		FillerManager.registry.addRecipe(new FillerFillAll(), new Object[] { "bbb",
-				"bbb", "bbb", Character.valueOf('b'),
-				new ItemStack(Block.brick, 1) });
+		MinecraftForge.addRecipeCallback(new Runnable() {
+		    public void run() {
+		        /// INIT FILLER PATTERNS
+		        FillerManager.registry.addRecipe(new FillerFillAll(), new Object[] { "bbb",
+		                "bbb", "bbb", Character.valueOf('b'),
+		                new ItemStack(Block.brick, 1) });
 
-		FillerManager.registry.addRecipe(new FillerFlattener(),
-				new Object[] { "   ", "ggg", "bbb", Character.valueOf('g'),
-						Block.glass, Character.valueOf('b'), Block.brick });
+		        FillerManager.registry.addRecipe(new FillerFlattener(),
+		                new Object[] { "   ", "ggg", "bbb", Character.valueOf('g'),
+		                        Block.glass, Character.valueOf('b'), Block.brick });
 
-		FillerManager.registry.addRecipe(new FillerRemover(),
-				new Object[] { "ggg", "ggg", "ggg", Character.valueOf('g'),
-						Block.glass });
+		        FillerManager.registry.addRecipe(new FillerRemover(),
+		                new Object[] { "ggg", "ggg", "ggg", Character.valueOf('g'),
+		                        Block.glass });
 
-		FillerManager.registry.addRecipe(new FillerFillWalls(),
-				new Object[] { "bbb", "b b", "bbb", Character.valueOf('b'),
-						Block.brick });
+		        FillerManager.registry.addRecipe(new FillerFillWalls(),
+		                new Object[] { "bbb", "b b", "bbb", Character.valueOf('b'),
+		                        Block.brick });
 
-		FillerManager.registry.addRecipe(new FillerFillPyramid(),
-				new Object[] { "   ", " b ", "bbb", Character.valueOf('b'),
-						Block.brick });
+		        FillerManager.registry.addRecipe(new FillerFillPyramid(),
+		                new Object[] { "   ", " b ", "bbb", Character.valueOf('b'),
+		                        Block.brick });
 
-		FillerManager.registry.addRecipe(new FillerFillStairs(),
-				new Object[] { "  b", " bb", "bbb", Character.valueOf('b'),
-						Block.brick });
+		        FillerManager.registry.addRecipe(new FillerFillStairs(),
+		                new Object[] { "  b", " bb", "bbb", Character.valueOf('b'),
+		                        Block.brick });
 
-
-		BuildCraftCore.mainConfiguration.save();
+                new BptBlockWallSide(markerBlock.blockID);
+                new BptBlockWallSide(pathMarkerBlock.blockID);
+                new BptBlockFiller (fillerBlock.blockID);
+                new BptBlockRotateInventory(builderBlock.blockID, new int [] {2, 5, 3, 4}, true);
+                new BptBlockRotateInventory(architectBlock.blockID, new int [] {2, 5, 3, 4}, true);
+                new BptBlockInventory(libraryBlock.blockID);
+		    }
+		});
 
 
 //	    public static final Block music;
@@ -208,99 +241,95 @@ public class BuildCraftBuilders {
 //	    public static final BlockPortal portal;
 //	    public static final Block trapdoor;
 
-		// STANDARD BLOCKS
+		MinecraftForge.addRecipeCallback(new Runnable() {
+		    public void run() {
+		        // STANDARD BLOCKS
+		        new BptBlock(0); // default bpt block
 
-		new BptBlock(0); // default bpt block
+		        new BptBlockIgnore(Block.snow.blockID);
+		        new BptBlockIgnore(Block.tallGrass.blockID);
+		        new BptBlockIgnore(Block.ice.blockID);
+		        new BptBlockIgnore(Block.pistonExtension.blockID);
 
-		new BptBlockIgnore(Block.snow.blockID);
-		new BptBlockIgnore(Block.tallGrass.blockID);
-		new BptBlockIgnore(Block.ice.blockID);
-		new BptBlockIgnore(Block.pistonExtension.blockID);
+		        new BptBlockDirt(Block.dirt.blockID);
+		        new BptBlockDirt(Block.grass.blockID);
+		        new BptBlockDirt(Block.tilledField.blockID);
 
-		new BptBlockDirt(Block.dirt.blockID);
-		new BptBlockDirt(Block.grass.blockID);
-		new BptBlockDirt(Block.tilledField.blockID);
+		        new BptBlockDelegate(Block.torchRedstoneIdle.blockID, Block.torchRedstoneActive.blockID);
+		        new BptBlockDelegate(Block.stoneOvenActive.blockID, Block.stoneOvenIdle.blockID);
+		        new BptBlockDelegate(Block.pistonMoving.blockID, Block.pistonBase.blockID);
 
-		new BptBlockDelegate(Block.torchRedstoneIdle.blockID, Block.torchRedstoneActive.blockID);
-		new BptBlockDelegate(Block.stoneOvenActive.blockID, Block.stoneOvenIdle.blockID);
-		new BptBlockDelegate(Block.pistonMoving.blockID, Block.pistonBase.blockID);
+		        new BptBlockWallSide(Block.torchWood.blockID);
+		        new BptBlockWallSide(Block.torchRedstoneActive.blockID);
 
-		new BptBlockWallSide(Block.torchWood.blockID);
-		new BptBlockWallSide(Block.torchRedstoneActive.blockID);
+		        new BptBlockRotateMeta(Block.ladder.blockID, new int [] {2, 5, 3, 4}, true);
+		        new BptBlockRotateMeta(Block.fenceGate.blockID, new int [] {0, 1, 2, 3}, true);
 
-		new BptBlockRotateMeta(Block.ladder.blockID, new int [] {2, 5, 3, 4}, true);
-		new BptBlockRotateMeta(Block.fenceGate.blockID, new int [] {0, 1, 2, 3}, true);
+		        new BptBlockRotateInventory(Block.stoneOvenIdle.blockID, new int [] {2, 5, 3, 4}, true);
+		        new BptBlockRotateInventory(Block.chest.blockID, new int [] {2, 5, 3, 4}, true);
+		        new BptBlockRotateInventory(Block.lockedChest.blockID, new int [] {2, 5, 3, 4}, true);
+		        new BptBlockRotateInventory(Block.dispenser.blockID, new int [] {2, 5, 3, 4}, true);
 
-		new BptBlockRotateInventory(Block.stoneOvenIdle.blockID, new int [] {2, 5, 3, 4}, true);
-		new BptBlockRotateInventory(Block.chest.blockID, new int [] {2, 5, 3, 4}, true);
-		new BptBlockRotateInventory(Block.lockedChest.blockID, new int [] {2, 5, 3, 4}, true);
-		new BptBlockRotateInventory(Block.dispenser.blockID, new int [] {2, 5, 3, 4}, true);
+		        new BptBlockInventory(Block.brewingStand.blockID);
 
-		new BptBlockInventory(Block.brewingStand.blockID);
+		        new BptBlockRotateMeta(Block.vine.blockID, new int [] {1, 4, 8, 2}, false);
+		        new BptBlockRotateMeta(Block.trapdoor.blockID, new int [] {0, 1, 2, 3}, false);
 
-		new BptBlockRotateMeta(Block.vine.blockID, new int [] {1, 4, 8, 2}, false);
-		new BptBlockRotateMeta(Block.trapdoor.blockID, new int [] {0, 1, 2, 3}, false);
+		        new BptBlockLever(Block.button.blockID);
+		        new BptBlockLever(Block.lever.blockID);
 
-		new BptBlockLever(Block.button.blockID);
-		new BptBlockLever(Block.lever.blockID);
+		        new BptBlockCustomStack(Block.stone.blockID, new ItemStack(Block.stone));
+		        new BptBlockCustomStack(Block.redstoneWire.blockID, new ItemStack(Item.redstone));
+		        new BptBlockCustomStack(Block.stairDouble.blockID, new ItemStack(Block.stairSingle, 2));
+		        new BptBlockCustomStack(Block.cake.blockID, new ItemStack(Item.cake));
+		        new BptBlockCustomStack(Block.crops.blockID, new ItemStack(Item.seeds));
+		        new BptBlockCustomStack(Block.pumpkinStem.blockID, new ItemStack(Item.pumpkinSeeds));
+		        new BptBlockCustomStack(Block.melonStem.blockID, new ItemStack(Item.melonSeeds));
+		        new BptBlockCustomStack(Block.glowStone.blockID, new ItemStack(Block.glowStone));
 
-		new BptBlockCustomStack(Block.stone.blockID, new ItemStack(Block.stone));
-		new BptBlockCustomStack(Block.redstoneWire.blockID, new ItemStack(Item.redstone));
-		new BptBlockCustomStack(Block.stairDouble.blockID, new ItemStack(Block.stairSingle, 2));
-		new BptBlockCustomStack(Block.cake.blockID, new ItemStack(Item.cake));
-		new BptBlockCustomStack(Block.crops.blockID, new ItemStack(Item.seeds));
-		new BptBlockCustomStack(Block.pumpkinStem.blockID, new ItemStack(Item.pumpkinSeeds));
-		new BptBlockCustomStack(Block.melonStem.blockID, new ItemStack(Item.melonSeeds));
-		new BptBlockCustomStack(Block.glowStone.blockID, new ItemStack(Block.glowStone));
+		        new BptBlockRedstoneRepeater(Block.redstoneRepeaterActive.blockID);
+		        new BptBlockRedstoneRepeater(Block.redstoneRepeaterIdle.blockID);
 
-		new BptBlockRedstoneRepeater(Block.redstoneRepeaterActive.blockID);
-		new BptBlockRedstoneRepeater(Block.redstoneRepeaterIdle.blockID);
+		        new BptBlockLiquid (Block.waterStill.blockID, new ItemStack (Item.bucketWater));
+		        new BptBlockLiquid(Block.waterMoving.blockID, new ItemStack (Item.bucketWater));
+		        new BptBlockLiquid (Block.lavaStill.blockID, new ItemStack (Item.bucketLava));
+		        new BptBlockLiquid(Block.lavaMoving.blockID, new ItemStack (Item.bucketLava));
 
-		new BptBlockLiquid (Block.waterStill.blockID, new ItemStack (Item.bucketWater));
-		new BptBlockLiquid(Block.waterMoving.blockID, new ItemStack (Item.bucketWater));
-		new BptBlockLiquid (Block.lavaStill.blockID, new ItemStack (Item.bucketLava));
-		new BptBlockLiquid(Block.lavaMoving.blockID, new ItemStack (Item.bucketLava));
+		        new BptBlockIgnoreMeta(Block.rail.blockID);
+		        new BptBlockIgnoreMeta(Block.railPowered.blockID);
+		        new BptBlockIgnoreMeta(Block.railDetector.blockID);
+		        new BptBlockIgnoreMeta(Block.thinGlass.blockID);
 
-		new BptBlockIgnoreMeta(Block.rail.blockID);
-		new BptBlockIgnoreMeta(Block.railPowered.blockID);
-		new BptBlockIgnoreMeta(Block.railDetector.blockID);
-		new BptBlockIgnoreMeta(Block.thinGlass.blockID);
+		        new BptBlockPiston(Block.pistonBase.blockID);
+		        new BptBlockPiston(Block.pistonStickyBase.blockID);
 
-		new BptBlockPiston(Block.pistonBase.blockID);
-		new BptBlockPiston(Block.pistonStickyBase.blockID);
+		        new BptBlockPumpkin(Block.pumpkinLantern.blockID);
 
-		new BptBlockPumpkin(Block.pumpkinLantern.blockID);
+		        new BptBlockStairs(Block.stairCompactCobblestone.blockID);
+		        new BptBlockStairs(Block.stairCompactPlanks.blockID);
+		        new BptBlockStairs(Block.stairsNetherBrick.blockID);
+		        new BptBlockStairs(Block.stairsBrick.blockID);
+		        new BptBlockStairs(Block.stairsStoneBrickSmooth.blockID);
 
-		new BptBlockStairs(Block.stairCompactCobblestone.blockID);
-		new BptBlockStairs(Block.stairCompactPlanks.blockID);
-		new BptBlockStairs(Block.stairsNetherBrick.blockID);
-		new BptBlockStairs(Block.stairsBrick.blockID);
-		new BptBlockStairs(Block.stairsStoneBrickSmooth.blockID);
+		        new BptBlockDoor(Block.doorWood.blockID, new ItemStack(Item.doorWood));
+		        new BptBlockDoor(Block.doorSteel.blockID, new ItemStack(Item.doorSteel));
 
-		new BptBlockDoor(Block.doorWood.blockID, new ItemStack(Item.doorWood));
-		new BptBlockDoor(Block.doorSteel.blockID, new ItemStack(Item.doorSteel));
+		        new BptBlockBed(Block.bed.blockID);
 
-		new BptBlockBed(Block.bed.blockID);
-
-		new BptBlockSign(Block.signWall.blockID, true);
-		new BptBlockSign(Block.signPost.blockID, false);
-
-		// BUILDCRAFT BLOCKS
-
-		new BptBlockRotateInventory(architectBlock.blockID, new int [] {2, 5, 3, 4}, true);
-		new BptBlockRotateInventory(builderBlock.blockID, new int [] {2, 5, 3, 4}, true);
-
-		new BptBlockInventory(libraryBlock.blockID);
-
-		new BptBlockWallSide(markerBlock.blockID);
-		new BptBlockWallSide(pathMarkerBlock.blockID);
-		new BptBlockFiller (fillerBlock.blockID);
+		        new BptBlockSign(Block.signWall.blockID, true);
+		        new BptBlockSign(Block.signPost.blockID, false);
+		    }
+		});
 
 		// Optimization
 		WorldIteratorRadius.createPrecomputedList(TilePathMarker.searchSize);
 
-		if (BuildCraftCore.loadDefaultRecipes)
-			loadRecipes();
+		MinecraftForge.addRecipeCallback(new Runnable() {
+		    public void run() {
+		        if (BuildCraftCore.loadDefaultRecipes)
+		            loadRecipes();
+		    }
+		});
 	}
 
 	public static void loadRecipes () {

@@ -24,15 +24,6 @@ public class mod_BuildCraftEnergy extends NetworkMod {
 	}
 
 	@Override
-	public void modsLoaded () {
-		super.modsLoaded();
-		BuildCraftEnergy.initialize();
-
-		ModLoader.registerTileEntity(TileEngine.class,
-				"net.minecraft.src.buildcraft.energy.Engine");
-	}
-
-	@Override
 	public String getVersion() {
 		return DefaultProps.VERSION;
 	}
@@ -45,6 +36,10 @@ public class mod_BuildCraftEnergy extends NetworkMod {
 	@Override
 	public void load() {
 		BuildCraftEnergy.load();
+		BuildCraftEnergy.initialize();
+
+        ModLoader.registerTileEntity(TileEngine.class,
+                "net.minecraft.src.buildcraft.energy.Engine");
 	}
 
 	@Override public boolean clientSideRequired() { return true; }

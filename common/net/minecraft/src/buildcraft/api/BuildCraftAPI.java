@@ -18,6 +18,7 @@ import net.minecraft.src.Item;
 import net.minecraft.src.ItemStack;
 import net.minecraft.src.TileEntity;
 import net.minecraft.src.World;
+import net.minecraft.src.forge.MinecraftForge;
 
 public class BuildCraftAPI {
 
@@ -27,18 +28,20 @@ public class BuildCraftAPI {
 	
 	// BuildCraft additional block and item data
 	
-	public static boolean [] softBlocks = new boolean [Block.blocksList.length];
-	public static BptBlock[] blockBptProps = new BptBlock[Block.blocksList.length];
+	// Intentionally initialized to null to force mods to set these in the
+	// right place.
+	public static boolean [] softBlocks = null;
+	public static BptBlock[] blockBptProps = null;
 	
 	// Other BuildCraft global data
 	
-	public static LinkedList <LiquidData> liquids = new LinkedList <LiquidData> ();	
-	public static HashMap<Integer, IronEngineFuel> ironEngineFuel = new HashMap<Integer, IronEngineFuel>();		
+	public static LinkedList <LiquidData> liquids = null;
+	public static HashMap<Integer, IronEngineFuel> ironEngineFuel = null;		
 	public static Trigger [] triggers = new Trigger [1024];
 	public static Action [] actions = new Action [1024];
 	
 	private static EntityPlayer buildCraftPlayer;
-	private static LinkedList <RefineryRecipe> refineryRecipe = new LinkedList <RefineryRecipe> ();
+	private static LinkedList <RefineryRecipe> refineryRecipe = null;
 	private static LinkedList <ITriggerProvider> triggerProviders = new LinkedList <ITriggerProvider> ();
 	private static LinkedList <IActionProvider> actionProviders = new LinkedList <IActionProvider> ();
 
@@ -239,13 +242,21 @@ public class BuildCraftAPI {
 	}
 	
 	static {
-		for (int i = 0; i < softBlocks.length; ++i) {
-			softBlocks [i] = false;
-		}
 		
-		// Initialize defaults for block properties.
-		for (int i = 0; i < blockBptProps.length; ++i) {
-			new BptBlock(i);
-		}
+		MinecraftForge.addRecipeResetCallback(new Runnable() {
+		    public void run() {
+		        softBlocks = new boolean [Block.blocksList.length];
+		        
+		        blockBptProps = new BptBlock[Block.blocksList.length];
+		        for(int i = 0; i < blockBptProps.length; i++)
+		            new BptBlock(i);
+		        
+		        liquids = new LinkedList <LiquidData> ();
+		        
+		        ironEngineFuel = new HashMap<Integer, IronEngineFuel>();
+		        
+		        refineryRecipe = new LinkedList <RefineryRecipe> ();
+		    }
+		});
 	}
 }

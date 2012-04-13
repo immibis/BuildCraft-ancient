@@ -19,6 +19,7 @@ import net.minecraft.src.buildcraft.energy.TextureFuelFX;
 import net.minecraft.src.buildcraft.energy.TextureOilFX;
 import net.minecraft.src.buildcraft.energy.TextureOilFlowFX;
 import net.minecraft.src.buildcraft.energy.TileEngine;
+import net.minecraft.src.forge.MinecraftForge;
 import net.minecraft.src.forge.NetworkMod;
 
 public class mod_BuildCraftEnergy extends NetworkMod {
@@ -30,19 +31,24 @@ public class mod_BuildCraftEnergy extends NetworkMod {
 	}
 
 	@Override
-	public void modsLoaded () {
-		super.modsLoaded();
+	public void load () {
+	    BuildCraftEnergy.load();
 		BuildCraftEnergy.initialize();
 
-		mod_BuildCraftCore.blockByEntityRenders.put(new EntityRenderIndex(
-				BuildCraftEnergy.engineBlock, 0), new RenderEngine(
-				"/net/minecraft/src/buildcraft/energy/gui/base_wood.png"));
-		mod_BuildCraftCore.blockByEntityRenders.put(new EntityRenderIndex(
-				BuildCraftEnergy.engineBlock, 1), new RenderEngine(
-				"/net/minecraft/src/buildcraft/energy/gui/base_stone.png"));
-		mod_BuildCraftCore.blockByEntityRenders.put(new EntityRenderIndex(
-				BuildCraftEnergy.engineBlock, 2), new RenderEngine(
-				"/net/minecraft/src/buildcraft/energy/gui/base_iron.png"));
+		MinecraftForge.addRecipeCallback(new Runnable() {
+		    public void run() {
+		        mod_BuildCraftCore.blockByEntityRenders.put(new EntityRenderIndex(
+		                BuildCraftEnergy.engineBlock, 0), new RenderEngine(
+		                "/net/minecraft/src/buildcraft/energy/gui/base_wood.png"));
+		        mod_BuildCraftCore.blockByEntityRenders.put(new EntityRenderIndex(
+		                BuildCraftEnergy.engineBlock, 1), new RenderEngine(
+		                "/net/minecraft/src/buildcraft/energy/gui/base_stone.png"));
+		        mod_BuildCraftCore.blockByEntityRenders.put(new EntityRenderIndex(
+		                BuildCraftEnergy.engineBlock, 2), new RenderEngine(
+		                "/net/minecraft/src/buildcraft/energy/gui/base_iron.png"));
+		    }
+		});
+		
 
 		ModLoader.getMinecraftInstance().renderEngine.registerTextureFX(new TextureOilFX());
 		ModLoader.getMinecraftInstance().renderEngine.registerTextureFX(new TextureFuelFX());
@@ -84,11 +90,6 @@ public class mod_BuildCraftEnergy extends NetworkMod {
     public void generateSurface(World world, Random random, int i, int j) {
     	BuildCraftEnergy.generateSurface (world, random, i, j);
     }
-
-	@Override
-	public void load() {
-		BuildCraftEnergy.load();
-	}
 
 	@Override public boolean clientSideRequired() { return true; }
 	@Override public boolean serverSideRequired() { return true; }

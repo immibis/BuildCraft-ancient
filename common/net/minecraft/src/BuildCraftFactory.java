@@ -36,6 +36,7 @@ import net.minecraft.src.buildcraft.factory.TileRefinery;
 import net.minecraft.src.buildcraft.factory.TileTank;
 import net.minecraft.src.buildcraft.silicon.TileLaser;
 import net.minecraft.src.forge.Configuration;
+import net.minecraft.src.forge.IIDCallback;
 import net.minecraft.src.forge.MinecraftForge;
 import net.minecraft.src.forge.Property;
 
@@ -69,74 +70,85 @@ public class BuildCraftFactory {
 			initialized = true;
 
 		mod_BuildCraftCore.initialize();
-		BuildCraftCore.initializeGears();
 
 		allowMining = Boolean
 				.parseBoolean(BuildCraftCore.mainConfiguration
 						.getOrCreateBooleanProperty("mining.enabled",
 								Configuration.CATEGORY_GENERAL, true).value);
-
-		Property minigWellId = BuildCraftCore.mainConfiguration
-				.getOrCreateBlockIdProperty("miningWell.id",
-						DefaultProps.MINING_WELL_ID);
-		Property plainPipeId = BuildCraftCore.mainConfiguration
-				.getOrCreateBlockIdProperty("drill.id", DefaultProps.DRILL_ID);
-		Property autoWorkbenchId = BuildCraftCore.mainConfiguration
-				.getOrCreateBlockIdProperty("autoWorkbench.id",
-						DefaultProps.AUTO_WORKBENCH_ID);
-		Property frameId = BuildCraftCore.mainConfiguration
-				.getOrCreateBlockIdProperty("frame.id", DefaultProps.FRAME_ID);
-		Property quarryId = BuildCraftCore.mainConfiguration
-				.getOrCreateBlockIdProperty("quarry.id", DefaultProps.QUARRY_ID);
-		Property pumpId = BuildCraftCore.mainConfiguration
-		   .getOrCreateBlockIdProperty("pump.id", DefaultProps.PUMP_ID);
-		Property tankId = BuildCraftCore.mainConfiguration
-		   .getOrCreateBlockIdProperty("tank.id", DefaultProps.TANK_ID);
-		Property refineryId = BuildCraftCore.mainConfiguration
-		.getOrCreateBlockIdProperty("refinery.id", DefaultProps.REFINERY_ID);
-
+		
 		BuildCraftCore.mainConfiguration.save();
 
+		IIDCallback idc = new IIDCallback() {
+            
+            @Override
+            public void unregister(String name, int id) {
+                Item.itemsList[id] = null;
+                Block.blocksList[id] = null;
+            }
+            
+            @Override
+            public void register(String name, int id) {
+                
+                if(name.equals("miningWell")) {
+                    miningWellBlock = new BlockMiningWell(id);
+                    CoreProxy.registerBlock(miningWellBlock);
+                    CoreProxy.addName(miningWellBlock.setBlockName("miningWellBlock"), "Mining Well");
+                
+                } else if(name.equals("drill")) {
+                    plainPipeBlock = new BlockPlainPipe(id);
+                    CoreProxy.registerBlock(plainPipeBlock);
+                    CoreProxy.addName(plainPipeBlock.setBlockName("plainPipeBlock"), "Mining Pipe");
+                
+                } else if(name.equals("autoWorkbench")) {
+                    autoWorkbenchBlock = new BlockAutoWorkbench(id);
+                    CoreProxy.registerBlock(autoWorkbenchBlock);
+                    CoreProxy.addName(autoWorkbenchBlock.setBlockName("autoWorkbenchBlock"),
+                            "Automatic Crafting Table");
+                    
+                } else if(name.equals("frame")) {
+                    frameBlock = new BlockFrame(id);
+                    CoreProxy.registerBlock(frameBlock);
+                    CoreProxy.addName(frameBlock.setBlockName("frameBlock"), "Frame");
+                    
+                } else if(name.equals("quarry")) {
+                    quarryBlock = new BlockQuarry(id);
+                    CoreProxy.registerBlock(quarryBlock);
+
+                    CoreProxy.addName(quarryBlock.setBlockName("machineBlock"),
+                    "Quarry");
+                
+                } else if(name.equals("pump")) {
+                    pumpBlock = new BlockPump(id);
+                    CoreProxy.addName(pumpBlock.setBlockName("pumpBlock"),
+                    "Pump");
+                    CoreProxy.registerBlock(pumpBlock);
+                
+                } else if(name.equals("tank")) {
+                    tankBlock = new BlockTank(id);
+                    CoreProxy.addName(tankBlock.setBlockName("tankBlock"),
+                    "Tank");
+                    CoreProxy.registerBlock(tankBlock);
+                
+                } else if(name.equals("refinery")) {
+                    refineryBlock = new BlockRefinery(id);
+                    CoreProxy.addName(refineryBlock.setBlockName("refineryBlock"),
+                    "Refinery");
+                    CoreProxy.registerBlock(refineryBlock);
+                    
+                }
+            }
+        };
+        
+        MinecraftForge.registerBlockID(mod_BuildCraftFactory.instance, "miningWell", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftFactory.instance, "drill", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftFactory.instance, "autoWorkbench", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftFactory.instance, "frame", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftFactory.instance, "quarry", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftFactory.instance, "pump", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftFactory.instance, "tank", idc);
+        MinecraftForge.registerBlockID(mod_BuildCraftFactory.instance, "refinery", idc);
+
 		MinecraftForge.registerCustomBucketHandler(new TankBucketHandler());
-
-		miningWellBlock = new BlockMiningWell(Integer.parseInt(minigWellId.value));
-		CoreProxy.registerBlock(miningWellBlock);
-		CoreProxy.addName(miningWellBlock.setBlockName("miningWellBlock"), "Mining Well");
-
-		plainPipeBlock = new BlockPlainPipe(Integer.parseInt(plainPipeId.value));
-		CoreProxy.registerBlock(plainPipeBlock);
-		CoreProxy.addName(plainPipeBlock.setBlockName("plainPipeBlock"), "Mining Pipe");
-
-		autoWorkbenchBlock = new BlockAutoWorkbench(
-				Integer.parseInt(autoWorkbenchId.value));
-		CoreProxy.registerBlock(autoWorkbenchBlock);
-		CoreProxy.addName(autoWorkbenchBlock.setBlockName("autoWorkbenchBlock"),
-				"Automatic Crafting Table");
-
-		frameBlock = new BlockFrame(Integer.parseInt(frameId.value));
-		CoreProxy.registerBlock(frameBlock);
-		CoreProxy.addName(frameBlock.setBlockName("frameBlock"), "Frame");
-
-		quarryBlock = new BlockQuarry(Integer.parseInt(quarryId.value));
-		CoreProxy.registerBlock(quarryBlock);
-
-		CoreProxy.addName(quarryBlock.setBlockName("machineBlock"),
-		"Quarry");
-
-		tankBlock = new BlockTank(Integer.parseInt(tankId.value));
-		CoreProxy.addName(tankBlock.setBlockName("tankBlock"),
-		"Tank");
-		CoreProxy.registerBlock(tankBlock);
-
-		pumpBlock = new BlockPump(Integer.parseInt(pumpId.value));
-		CoreProxy.addName(pumpBlock.setBlockName("pumpBlock"),
-		"Pump");
-		CoreProxy.registerBlock(pumpBlock);
-
-		refineryBlock = new BlockRefinery(Integer.parseInt(refineryId.value));
-		CoreProxy.addName(refineryBlock.setBlockName("refineryBlock"),
-		"Refinery");
-		CoreProxy.registerBlock(refineryBlock);
 
 		CoreProxy.registerTileEntity(TileQuarry.class, "Machine");
 		CoreProxy.registerTileEntity(TileMiningWell.class, "MiningWell");
@@ -153,14 +165,18 @@ public class BuildCraftFactory {
 		drillTexture = 2 * 16 + 1;
 
 		BuildCraftCore.mainConfiguration.save();
+		
+		MinecraftForge.addRecipeCallback(new Runnable() {
+		    public void run() {
+                new BptBlockAutoWorkbench(autoWorkbenchBlock.blockID);
+                new BptBlockFrame(frameBlock.blockID);
+                new BptBlockTank(tankBlock.blockID);
+                new BptBlockRefinery(refineryBlock.blockID);
 
-		new BptBlockAutoWorkbench(autoWorkbenchBlock.blockID);
-		new BptBlockFrame(frameBlock.blockID);
-		new BptBlockRefinery(refineryBlock.blockID);
-		new BptBlockTank(tankBlock.blockID);
-
-		if (BuildCraftCore.loadDefaultRecipes)
-			loadRecipes();
+                if(BuildCraftCore.loadDefaultRecipes)
+		            loadRecipes();
+		    }
+		});
 	}
 
 	public static void loadRecipes () {

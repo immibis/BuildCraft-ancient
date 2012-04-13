@@ -41,6 +41,7 @@ import net.minecraft.src.buildcraft.core.network.EntityIds;
 import net.minecraft.src.buildcraft.core.network.PacketUpdate;
 import net.minecraft.src.buildcraft.transport.TriggerRedstoneInput;
 import net.minecraft.src.forge.Configuration;
+import net.minecraft.src.forge.IIDCallback;
 import net.minecraft.src.forge.MinecraftForge;
 import net.minecraft.src.forge.Property;
 
@@ -215,34 +216,101 @@ public class BuildCraftCore {
 				e.printStackTrace();
 				PowerFramework.currentFramework = new RedstonePowerFramework();
 			}
+		
 
-		Property wrenchId = BuildCraftCore.mainConfiguration
-		.getOrCreateIntProperty("wrench.id",
-				Configuration.CATEGORY_ITEM, DefaultProps.WRENCH_ID);
-
-		mainConfiguration.save();
-
-		initializeGears ();
-
-		wrenchItem = (new ItemBuildCraftTexture(Integer.parseInt(wrenchId.value)))
-		.setIconIndex(0 * 16 + 2)
-		.setItemName("wrenchItem");
-		CoreProxy.addName(wrenchItem, "Wrench");
-
-		BuildCraftAPI.liquids.add(new LiquidData(Block.waterStill.blockID, Block.waterMoving.blockID,
-				Item.bucketWater));
-		BuildCraftAPI.liquids.add(new LiquidData(Block.lavaStill.blockID, Block.lavaMoving.blockID,
-				Item.bucketLava));
-
-		BuildCraftAPI.softBlocks [Block.tallGrass.blockID] = true;
-		BuildCraftAPI.softBlocks [Block.snow.blockID] = true;
-		BuildCraftAPI.softBlocks [Block.waterMoving.blockID] = true;
-		BuildCraftAPI.softBlocks [Block.waterStill.blockID] = true;
+		Property modifyWorld = BuildCraftCore.mainConfiguration
+        .getOrCreateBooleanProperty("modifyWorld",
+                Configuration.CATEGORY_GENERAL, true);
+        modifyWorld.comment = "set to false if BuildCraft should not generate custom blocks (e.g. oil)";
+        
+        BuildCraftCore.modifyWorld = modifyWorld.value.equals("true");
+        
+        BuildCraftAPI.registerTriggerProvider(new DefaultTriggerProvider());
+        BuildCraftAPI.registerActionProvider(new DefaultActionProvider());
 
 		mainConfiguration.save();
+		
+		
+		
+        MinecraftForge.registerItemID(mod_BuildCraftCore.instance, "wrench", new IIDCallback() {
+            
+            @Override
+            public void unregister(String name, int id) {
+                Item.itemsList[id] = null;
+            }
+            
+            @Override
+            public void register(String name, int id) {
+                wrenchItem = (new ItemBuildCraftTexture(id - 256))
+                             .setIconIndex(0 * 16 + 2)
+                             .setItemName("wrenchItem");
+                CoreProxy.addName(wrenchItem, "Wrench");
+            }
+        });
 
-		if (BuildCraftCore.loadDefaultRecipes)
-			loadRecipes();
+        IIDCallback idc = new IIDCallback() {
+
+            @Override
+            public void register(String name, int id) {
+                ItemBuildCraftTexture item = new ItemBuildCraftTexture(id - 256);
+                item.setItemName(name);
+                
+                if(name.equals("woodenGearItem")) {
+                    woodenGearItem = item;
+                    item.setIconIndex(1 * 16 + 0);
+                    CoreProxy.addName(item, "Wooden Gear");
+                
+                } else if(name.equals("stoneGearItem")) {
+                    stoneGearItem = item;
+                    item.setIconIndex(1 * 16 + 1);
+                    CoreProxy.addName(item, "Stone Gear");
+                
+                } else if(name.equals("ironGearItem")) {
+                    ironGearItem = item;
+                    item.setIconIndex(1 * 16 + 2);
+                    CoreProxy.addName(item, "Iron Gear");
+                
+                } else if(name.equals("goldGearItem")) {
+                    goldGearItem = item;
+                    item.setIconIndex(1 * 16 + 3);
+                    CoreProxy.addName(item, "Gold Gear");
+                
+                } else if(name.equals("diamondGearItem")) {
+                    diamondGearItem = item;
+                    item.setIconIndex(1 * 16 + 4);
+                    CoreProxy.addName(item, "Diamond Gear");
+                }
+            }
+
+            @Override
+            public void unregister(String name, int id) {
+                Item.itemsList[id] = null;
+            }
+		    
+		};
+		
+		MinecraftForge.registerItemID(mod_BuildCraftCore.instance, "woodenGearItem", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftCore.instance, "stoneGearItem", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftCore.instance, "ironGearItem", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftCore.instance, "goldGearItem", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftCore.instance, "diamondGearItem", idc);
+		
+		MinecraftForge.addRecipeCallback(new Runnable() {
+		    public void run() {
+		        BuildCraftAPI.liquids.add(new LiquidData(Block.waterStill.blockID, Block.waterMoving.blockID,
+		                Item.bucketWater));
+		        BuildCraftAPI.liquids.add(new LiquidData(Block.lavaStill.blockID, Block.lavaMoving.blockID,
+		                Item.bucketLava));
+
+		        BuildCraftAPI.softBlocks [Block.tallGrass.blockID] = true;
+		        BuildCraftAPI.softBlocks [Block.snow.blockID] = true;
+		        BuildCraftAPI.softBlocks [Block.waterMoving.blockID] = true;
+		        BuildCraftAPI.softBlocks [Block.waterStill.blockID] = true;
+
+		        if (BuildCraftCore.loadDefaultRecipes)
+		            loadRecipes();
+		    }
+		});
 	}
 
 	public static void loadRecipes () {
@@ -270,70 +338,6 @@ public class BuildCraftCore {
 		craftingmanager.addRecipe(new ItemStack(diamondGearItem), new Object[] {
 			" I ", "IGI", " I ", Character.valueOf('I'), Item.diamond,
 			Character.valueOf('G'), goldGearItem });
-	}
-
-	public static void initializeGears () {
-		if (gearsInitialized)
-			return;
-
-		Property woodenGearId = BuildCraftCore.mainConfiguration
-				.getOrCreateIntProperty("woodenGearItem.id",
-						Configuration.CATEGORY_ITEM,
-						DefaultProps.WOODEN_GEAR_ID);
-		Property stoneGearId = BuildCraftCore.mainConfiguration
-				.getOrCreateIntProperty("stoneGearItem.id",
-						Configuration.CATEGORY_ITEM, DefaultProps.STONE_GEAR_ID);
-		Property ironGearId = BuildCraftCore.mainConfiguration
-				.getOrCreateIntProperty("ironGearItem.id",
-						Configuration.CATEGORY_ITEM, DefaultProps.IRON_GEAR_ID);
-		Property goldenGearId = BuildCraftCore.mainConfiguration
-				.getOrCreateIntProperty("goldenGearItem.id",
-						Configuration.CATEGORY_ITEM,
-						DefaultProps.GOLDEN_GEAR_ID);
-		Property diamondGearId = BuildCraftCore.mainConfiguration
-				.getOrCreateIntProperty("diamondGearItem.id",
-						Configuration.CATEGORY_ITEM,
-						DefaultProps.DIAMOND_GEAR_ID);
-		Property modifyWorld = BuildCraftCore.mainConfiguration
-				.getOrCreateBooleanProperty("modifyWorld",
-						Configuration.CATEGORY_GENERAL, true);
-		modifyWorld.comment = "set to false if BuildCraft should not generate custom blocks (e.g. oil)";
-
-		BuildCraftCore.mainConfiguration.save();
-
-		BuildCraftCore.modifyWorld = modifyWorld.value.equals("true");
-
-		gearsInitialized = true;
-
-		woodenGearItem = (new ItemBuildCraftTexture(Integer.parseInt(woodenGearId.value)))
-				.setIconIndex(1 * 16 + 0)
-				.setItemName("woodenGearItem");
-		CoreProxy.addName(woodenGearItem, "Wooden Gear");
-
-		stoneGearItem = (new ItemBuildCraftTexture(Integer.parseInt(stoneGearId.value)))
-				.setIconIndex(1 * 16 + 1)
-				.setItemName("stoneGearItem");
-		CoreProxy.addName(stoneGearItem, "Stone Gear");
-
-		ironGearItem = (new ItemBuildCraftTexture(Integer.parseInt(ironGearId.value)))
-				.setIconIndex(1 * 16 + 2)
-				.setItemName("ironGearItem");
-		CoreProxy.addName(ironGearItem, "Iron Gear");
-
-		goldGearItem = (new ItemBuildCraftTexture(Integer.parseInt(goldenGearId.value)))
-				.setIconIndex(1 * 16 + 3)
-				.setItemName("goldGearItem");
-		CoreProxy.addName(goldGearItem, "Gold Gear");
-
-		diamondGearItem = (new ItemBuildCraftTexture(Integer.parseInt(diamondGearId.value)))
-				.setIconIndex(1 * 16 + 4)
-				.setItemName("diamondGearItem");
-		CoreProxy.addName(diamondGearItem, "Diamond Gear");
-
-		BuildCraftCore.mainConfiguration.save();
-
-		BuildCraftAPI.registerTriggerProvider(new DefaultTriggerProvider());
-		BuildCraftAPI.registerActionProvider(new DefaultActionProvider());
 	}
 
 

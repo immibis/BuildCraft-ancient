@@ -15,6 +15,7 @@ import net.minecraft.src.buildcraft.transport.ItemPipe;
 import net.minecraft.src.buildcraft.transport.RenderPipe;
 import net.minecraft.src.forge.ForgeHooksClient;
 import net.minecraft.src.forge.IItemRenderer;
+import net.minecraft.src.forge.MinecraftForge;
 import net.minecraft.src.forge.MinecraftForgeClient;
 import net.minecraft.src.forge.NetworkMod;
 
@@ -29,50 +30,55 @@ public class mod_BuildCraftTransport extends NetworkMod implements IItemRenderer
 	}
 
 	@Override
-	public void modsLoaded () {
-		super.modsLoaded();
+	public void load () {
+	    BuildCraftTransport.load();
 		BuildCraftTransport.initialize();
 
 		//CoreProxy.registerGUI(this,
 		//		Utils.packetIdToInt(PacketIds.DiamondPipeGUI));
 
 
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeItemsWood.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeItemsCobblestone.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeItemsStone.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeItemsIron.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeItemsGold.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeItemsDiamond.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeItemsObsidian.shiftedIndex, this);
+		MinecraftForge.addRecipeCallback(new Runnable() {
+		    public void run() {
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeItemsWood.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeItemsCobblestone.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeItemsStone.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeItemsIron.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeItemsGold.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeItemsDiamond.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeItemsObsidian.shiftedIndex, mod_BuildCraftTransport.this);
 
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeLiquidsWood.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeLiquidsCobblestone.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeLiquidsStone.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeLiquidsIron.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeLiquidsGold.shiftedIndex, this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeLiquidsWood.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeLiquidsCobblestone.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeLiquidsStone.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeLiquidsIron.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeLiquidsGold.shiftedIndex, mod_BuildCraftTransport.this);
 
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipePowerWood.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipePowerStone.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipePowerGold.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeStructureCobblestone.shiftedIndex, this);
-		MinecraftForgeClient.registerItemRenderer(
-				BuildCraftTransport.pipeItemsStipes.shiftedIndex, this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipePowerWood.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipePowerStone.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipePowerGold.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeStructureCobblestone.shiftedIndex, mod_BuildCraftTransport.this);
+		        MinecraftForgeClient.registerItemRenderer(
+		                BuildCraftTransport.pipeItemsStipes.shiftedIndex, mod_BuildCraftTransport.this);
+		    }
+		});
+		
 	}
 
 	public static void registerTilePipe (Class <? extends TileEntity> clas, String name) {
@@ -137,11 +143,6 @@ public class mod_BuildCraftTransport extends NetworkMod implements IItemRenderer
 	@Override
 	public String getVersion() {
 		return DefaultProps.VERSION;
-	}
-
-	@Override
-	public void load() {
-		BuildCraftTransport.load();
 	}
 
 	/*

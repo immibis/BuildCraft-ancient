@@ -57,6 +57,7 @@ import net.minecraft.src.buildcraft.transport.pipes.PipePowerStone;
 import net.minecraft.src.buildcraft.transport.pipes.PipePowerWood;
 import net.minecraft.src.buildcraft.transport.pipes.PipeStructureCobblestone;
 import net.minecraft.src.forge.Configuration;
+import net.minecraft.src.forge.IIDCallback;
 import net.minecraft.src.forge.MinecraftForge;
 import net.minecraft.src.forge.Property;
 
@@ -144,15 +145,13 @@ public class BuildCraftTransport {
 
 		mod_BuildCraftCore.initialize();
 
-		Property loadLegacyPipes = BuildCraftCore.mainConfiguration
-		.getOrCreateBooleanProperty("loadLegacyPipes", Configuration.CATEGORY_GENERAL, true);
-		loadLegacyPipes.comment = "set to true to load pre 2.2.5 worlds pipes";
-
 		Property alwaysConnect = BuildCraftCore.mainConfiguration
 				.getOrCreateBooleanProperty("pipes.alwaysConnect",
 						Configuration.CATEGORY_GENERAL,
 						DefaultProps.PIPES_ALWAYS_CONNECT);
 		alwaysConnect.comment = "set to false to deactivate pipe connection rules, true by default";
+
+		alwaysConnectPipes = Boolean.parseBoolean(alwaysConnect.value);
 
 		Property exclusionList = BuildCraftCore.mainConfiguration
 				.getOrCreateProperty("woodenPipe.exclusion",
@@ -176,22 +175,44 @@ public class BuildCraftTransport {
 
 		groupItemsTrigger = Integer.parseInt(groupItemsTriggerProp.value);
 
+		BuildCraftCore.mainConfiguration.save();
 
-		Property genericPipeId = BuildCraftCore.mainConfiguration
-		.getOrCreateBlockIdProperty("pipe.id",
-				DefaultProps.GENERIC_PIPE_ID);
+        
+		
+		MinecraftForge.registerBlockID(mod_BuildCraftTransport.instance, "pipe", new IIDCallback() {
+
+            @Override
+            public void register(String name, int id) {
+                genericPipeBlock = new BlockGenericPipe(id);
+                CoreProxy.registerBlock(genericPipeBlock);
+            }
+
+            @Override
+            public void unregister(String name, int id) {
+                Block.blocksList[id] = null;
+                Item.itemsList[id] = null;
+            }
+		    
+		});
+		
+		MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeWaterproof", new IIDCallback() {
+            
+            @Override
+            public void unregister(String name, int id) {
+                Item.itemsList[id] = null;
+            }
+            
+            @Override
+            public void register(String name, int id) {
+                pipeWaterproof = new ItemBuildCraftTexture(id - 256).setIconIndex(2 * 16 + 1);
+                pipeWaterproof.setItemName("pipeWaterproof");
+                CoreProxy.addName(pipeWaterproof, "Pipe Waterproof");
+            }
+        });
 
 		for (int j = 0; j < PipeLogicWood.excludedBlocks.length; ++j)
 			PipeLogicWood.excludedBlocks[j] = PipeLogicWood.excludedBlocks[j]
 					.trim();
-
-		BuildCraftCore.mainConfiguration.save();
-
-		pipeWaterproof = new ItemBuildCraftTexture (DefaultProps.PIPE_WATERPROOF_ID).setIconIndex(2 * 16 + 1);
-		pipeWaterproof.setItemName("pipeWaterproof");
-		CoreProxy.addName(pipeWaterproof, "Pipe Waterproof");
-		genericPipeBlock = new BlockGenericPipe(Integer.parseInt(genericPipeId.value));
-		CoreProxy.registerBlock(genericPipeBlock);
 
 		// Fixing retro-compatiblity
 		mod_BuildCraftTransport.registerTilePipe(TileDummyGenericPipe.class,
@@ -201,38 +222,86 @@ public class BuildCraftTransport {
 
 		mod_BuildCraftTransport.registerTilePipe(TileGenericPipe.class,
 				"net.minecraft.src.buildcraft.transport.GenericPipe");
+		
+		IIDCallback idc = new IIDCallback() {
+            
+            @Override
+            public void unregister(String name, int id) {
+                Item.itemsList[id] = null;
+            }
+            
+            @Override
+            public void register(String name, int id) {
+                
+                if(name.equals("pipeItemsWood")) {
+                    pipeItemsWood = createPipe (id, PipeItemsWood.class, "Wooden Transport Pipe", Block.planks, Block.glass, Block.planks);
+                    BuildCraftCore.itemBptProps [pipeItemsWood.shiftedIndex] = new BptItemPipeWodden();
+                }
+                else if(name.equals("pipeItemsCobblestone"))
+                    pipeItemsCobblestone = createPipe(id, PipeItemsCobblestone.class, "Cobblestone Transport Pipe", Block.cobblestone, Block.glass, Block.cobblestone);
+                else if(name.equals("pipeItemsStone"))
+                    pipeItemsStone = createPipe (id, PipeItemsStone.class, "Stone Transport Pipe", Block.stone, Block.glass, Block.stone);
+                else if(name.equals("pipeItemsIron")) {
+                    pipeItemsIron = createPipe (id, PipeItemsIron.class, "Iron Transport Pipe", Item.ingotIron, Block.glass, Item.ingotIron);
+                    BuildCraftCore.itemBptProps [pipeItemsIron.shiftedIndex] = new BptItemPipeIron();
+                }
+                else if(name.equals("pipeItemsGold"))
+                    pipeItemsGold = createPipe (id, PipeItemsGold.class, "Golden Transport Pipe", Item.ingotGold, Block.glass, Item.ingotGold);
+                else if(name.equals("pipeItemsDiamond")) {
+                    pipeItemsDiamond = createPipe (id, PipeItemsDiamond.class, "Diamond Transport Pipe", Item.diamond, Block.glass, Item.diamond);
+                    BuildCraftCore.itemBptProps [pipeItemsDiamond.shiftedIndex] = new BptItemPipeDiamond();
+                }
+                else if(name.equals("pipeItemsObsidian"))
+                    pipeItemsObsidian = createPipe (id, PipeItemsObsidian.class, "Obsidian Transport Pipe", Block.obsidian, Block.glass, Block.obsidian);
 
-		pipeItemsWood = createPipe (DefaultProps.PIPE_ITEMS_WOOD_ID, PipeItemsWood.class, "Wooden Transport Pipe", Block.planks, Block.glass, Block.planks);
-		pipeItemsCobblestone = createPipe(DefaultProps.PIPE_ITEMS_COBBLESTONE_ID, PipeItemsCobblestone.class, "Cobblestone Transport Pipe", Block.cobblestone, Block.glass, Block.cobblestone);
-		pipeItemsStone = createPipe (DefaultProps.PIPE_ITEMS_STONE_ID, PipeItemsStone.class, "Stone Transport Pipe", Block.stone, Block.glass, Block.stone);
-		pipeItemsIron = createPipe (DefaultProps.PIPE_ITEMS_IRON_ID, PipeItemsIron.class, "Iron Transport Pipe", Item.ingotIron, Block.glass, Item.ingotIron);
-		pipeItemsGold = createPipe (DefaultProps.PIPE_ITEMS_GOLD_ID, PipeItemsGold.class, "Golden Transport Pipe", Item.ingotGold, Block.glass, Item.ingotGold);
-		pipeItemsDiamond = createPipe (DefaultProps.PIPE_ITEMS_DIAMOND_ID, PipeItemsDiamond.class, "Diamond Transport Pipe", Item.diamond, Block.glass, Item.diamond);
-		pipeItemsObsidian = createPipe (DefaultProps.PIPE_ITEMS_OBSIDIAN_ID, PipeItemsObsidian.class, "Obsidian Transport Pipe", Block.obsidian, Block.glass, Block.obsidian);
+                else if(name.equals("pipeLiquidsWood")) {
+                    pipeLiquidsWood = createPipe (id, PipeLiquidsWood.class, "Wooden Waterproof Pipe", pipeWaterproof, pipeItemsWood, null);
+                    BuildCraftCore.itemBptProps [pipeLiquidsWood.shiftedIndex] = new BptItemPipeWodden();
+                }
+                else if(name.equals("pipeLiquidsCobblestone"))
+                    pipeLiquidsCobblestone = createPipe (id, PipeLiquidsCobblestone.class, "Cobblestone Waterproof Pipe", pipeWaterproof, pipeItemsCobblestone, null);
+                else if(name.equals("pipeLiquidsStone"))
+                    pipeLiquidsStone = createPipe (id, PipeLiquidsStone.class, "Stone Waterproof Pipe", pipeWaterproof, pipeItemsStone, null);
+                else if(name.equals("pipeLiquidsIron")) {
+                    pipeLiquidsIron = createPipe (id, PipeLiquidsIron.class, "Iron Waterproof Pipe", pipeWaterproof, pipeItemsIron, null);
+                    BuildCraftCore.itemBptProps [pipeLiquidsIron.shiftedIndex] = new BptItemPipeIron();
+                }
+                else if(name.equals("pipeLiquidsGold"))
+                    pipeLiquidsGold = createPipe (id, PipeLiquidsGold.class, "Golden Waterproof Pipe", pipeWaterproof, pipeItemsGold, null);
 
-		pipeLiquidsWood = createPipe (DefaultProps.PIPE_LIQUIDS_WOOD_ID, PipeLiquidsWood.class, "Wooden Waterproof Pipe", pipeWaterproof, pipeItemsWood, null);
-		pipeLiquidsCobblestone = createPipe (DefaultProps.PIPE_LIQUIDS_COBBLESTONE_ID, PipeLiquidsCobblestone.class, "Cobblestone Waterproof Pipe", pipeWaterproof, pipeItemsCobblestone, null);
-		pipeLiquidsStone = createPipe (DefaultProps.PIPE_LIQUIDS_STONE_ID, PipeLiquidsStone.class, "Stone Waterproof Pipe", pipeWaterproof, pipeItemsStone, null);
-		pipeLiquidsIron = createPipe (DefaultProps.PIPE_LIQUIDS_IRON_ID, PipeLiquidsIron.class, "Iron Waterproof Pipe", pipeWaterproof, pipeItemsIron, null);
-		pipeLiquidsGold = createPipe (DefaultProps.PIPE_LIQUIDS_GOLD_ID, PipeLiquidsGold.class, "Golden Waterproof Pipe", pipeWaterproof, pipeItemsGold, null);
-		// diamond
-		// obsidian
+                else if(name.equals("pipePowerWood"))
+                    pipePowerWood = createPipe (id, PipePowerWood.class, "Wooden Conductive Pipe", Item.redstone,  pipeItemsWood, null);
+                else if(name.equals("pipePowerStone"))
+                    pipePowerStone = createPipe (id, PipePowerStone.class, "Stone Conductive Pipe", Item.redstone, pipeItemsStone, null);
+                else if(name.equals("pipePowerGold"))
+                    pipePowerGold = createPipe(id, PipePowerGold.class, "Golden Conductive Pipe", Item.redstone, pipeItemsGold, null);
+                
+                else if(name.equals("pipeStructureCobblestone"))
+                    pipeStructureCobblestone = createPipe (id, PipeStructureCobblestone.class, "Cobblestone Structure Pipe", Block.gravel,  pipeItemsCobblestone, null);
+                else if(name.equals("pipeItemsStripes"))
+                    pipeItemsStipes = createPipe (id, PipeItemsStripes.class, "Stripes Transport Pipe", new ItemStack (Item.dyePowder, 1, 0),  Block.glass, new ItemStack (Item.dyePowder, 1, 11));
+            }
+        };
+        
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeItemsWood", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeItemsCobblestone", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeItemsStone", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeItemsIron", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeItemsGold", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeItemsDiamond", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeItemsObsidian", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeLiquidsWood", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeLiquidsCobblestone", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeLiquidsStone", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeLiquidsIron", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeLiquidsGold", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipePowerWood", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipePowerStone", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipePowerGold", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeStructureCobblestone", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeItemsStripes", idc);
 
-		pipePowerWood = createPipe (DefaultProps.PIPE_POWER_WOOD_ID, PipePowerWood.class, "Wooden Conductive Pipe", Item.redstone,  pipeItemsWood, null);
-		// cobblestone
-		pipePowerStone = createPipe (DefaultProps.PIPE_POWER_STONE_ID, PipePowerStone.class, "Stone Conductive Pipe", Item.redstone, pipeItemsStone, null);
-		// iron
-		pipePowerGold = createPipe(DefaultProps.PIPE_POWER_GOLD_ID, PipePowerGold.class, "Golden Conductive Pipe", Item.redstone, pipeItemsGold, null);
-		// diamond
-		// obsidian
-
-		// Fix name and recipe (Structure pipe insteand of Signal?)
-		pipeStructureCobblestone = createPipe (DefaultProps.PIPE_STRUCTURE_COBBLESTONE_ID, PipeStructureCobblestone.class, "Cobblestone Structure Pipe", Block.gravel,  pipeItemsCobblestone, null);
-
-		// Fix the recipe
-		pipeItemsStipes = createPipe (DefaultProps.PIPE_ITEMS_STRIPES_ID, PipeItemsStripes.class, "Stripes Transport Pipe", new ItemStack (Item.dyePowder, 1, 0),  Block.glass, new ItemStack (Item.dyePowder, 1, 11));
-
-//		dockingStationBlock = new BlockDockingStation(Integer.parseInt(dockingStationId.value));
+//      dockingStationBlock = new BlockDockingStation(Integer.parseInt(dockingStationId.value));
 //		ModLoader.registerBlock(dockingStationBlock);
 //		CoreProxy.addName(dockingStationBlock.setBlockName("dockingStation"),
 //		"Docking Station");
@@ -241,108 +310,88 @@ public class BuildCraftTransport {
 
 		for (int j = 0; j < 6; ++j)
 			diamondTextures [j] = 1 * 16 + 6 + j;
+		
+		idc = new IIDCallback() {
+            
+            @Override
+            public void unregister(String name, int id) {
+                Item.itemsList[id] = null;
+            }
+            
+            @Override
+            public void register(String name, int id) {
+                if(name.equals("redPipeWire")) {
+                    redPipeWire = new ItemBuildCraftTexture(id - 256).setIconIndex(4 * 16 + 0);
+                    redPipeWire.setItemName("redPipeWire");
+                    CoreProxy.addName(redPipeWire, "Red Pipe Wire");
+                                    
+                } else if(name.equals("bluePipeWire")) {
+                    bluePipeWire = new ItemBuildCraftTexture(id - 256).setIconIndex(4 * 16 + 1);
+                    bluePipeWire.setItemName("bluePipeWire");
+                    CoreProxy.addName(bluePipeWire, "Blue Pipe Wire");
+                    
+                } else if(name.equals("greenPipeWire")) {
+                    greenPipeWire = new ItemBuildCraftTexture(id - 256).setIconIndex(4 * 16 + 2);
+                    greenPipeWire.setItemName("greenPipeWire");
+                    CoreProxy.addName(greenPipeWire, "Green Pipe Wire");
+                    
+                } else if(name.equals("yellowPipeWire")) {
+                    yellowPipeWire = new ItemBuildCraftTexture(id - 256).setIconIndex(4 * 16 + 3);
+                    yellowPipeWire.setItemName("yellowPipeWire");
+                    CoreProxy.addName(yellowPipeWire, "Yellow Pipe Wire");
+                    
+                } else if(name.equals("pipeGate")) {
+                    pipeGate = new ItemGate(id - 256, 0).setIconIndex(2 * 16 + 3);
+                    pipeGate.setItemName("pipeGate");
 
-		redPipeWire = new ItemBuildCraftTexture(DefaultProps.RED_PIPE_WIRE).setIconIndex(4 * 16 + 0);
-		redPipeWire.setItemName("redPipeWire");
-		CoreProxy.addName(redPipeWire, "Red Pipe Wire");
-		BuildCraftCore.assemblyRecipes.add(new AssemblyRecipe(new ItemStack[] {
-				new ItemStack(Item.dyePowder, 1, 1),
-				new ItemStack(Item.redstone, 1),
-				new ItemStack(Item.ingotIron, 1) }, 500, new ItemStack(
-				redPipeWire, 8)));
-
-		bluePipeWire = new ItemBuildCraftTexture(DefaultProps.BLUE_PIPE_WIRE).setIconIndex(4 * 16 + 1);
-		bluePipeWire.setItemName("bluePipeWire");
-		CoreProxy.addName(bluePipeWire, "Blue Pipe Wire");
-		BuildCraftCore.assemblyRecipes.add(new AssemblyRecipe(new ItemStack[] {
-				new ItemStack(Item.dyePowder, 1, 4),
-				new ItemStack(Item.redstone, 1),
-				new ItemStack(Item.ingotIron, 1) }, 500, new ItemStack(
-				bluePipeWire, 8)));
-
-		greenPipeWire = new ItemBuildCraftTexture(DefaultProps.GREEN_PIPE_WIRE).setIconIndex(4 * 16 + 2);
-		greenPipeWire.setItemName("greenPipeWire");
-		CoreProxy.addName(greenPipeWire, "Green Pipe Wire");
-		BuildCraftCore.assemblyRecipes.add(new AssemblyRecipe(new ItemStack[] {
-				new ItemStack(Item.dyePowder, 1, 2),
-				new ItemStack(Item.redstone, 1),
-				new ItemStack(Item.ingotIron, 1) }, 500, new ItemStack(
-				greenPipeWire, 8)));
-
-		yellowPipeWire = new ItemBuildCraftTexture(DefaultProps.YELLOW_PIPE_WIRE).setIconIndex(4 * 16 + 3);
-		yellowPipeWire.setItemName("yellowPipeWire");
-		CoreProxy.addName(yellowPipeWire, "Yellow Pipe Wire");
-		BuildCraftCore.assemblyRecipes.add(new AssemblyRecipe(new ItemStack[] {
-				new ItemStack(Item.dyePowder, 1, 11),
-				new ItemStack(Item.redstone, 1),
-				new ItemStack(Item.ingotIron, 1) }, 500, new ItemStack(
-				yellowPipeWire, 8)));
-
-		pipeGate = new ItemGate(DefaultProps.GATE_ID, 0).setIconIndex(2 * 16 + 3);
-		pipeGate.setItemName("pipeGate");
-
-		pipeGateAutarchic = new ItemGate(DefaultProps.GATE_AUTARCHIC_ID, 1).setIconIndex(2 * 16 + 3);
-		pipeGateAutarchic.setItemName("pipeGateAutarchic");
-
-		alwaysConnectPipes = Boolean.parseBoolean(alwaysConnect.value);
-
-		if (loadLegacyPipes.value.equals("true")) {
-			Property woodenPipeId = BuildCraftCore.mainConfiguration
-					.getOrCreateBlockIdProperty("woodenPipe.id",
-							DefaultProps.WOODEN_PIPE_ID);
-			Property stonePipeId = BuildCraftCore.mainConfiguration
-					.getOrCreateBlockIdProperty("stonePipe.id",
-							DefaultProps.STONE_PIPE_ID);
-			Property ironPipeId = BuildCraftCore.mainConfiguration
-					.getOrCreateBlockIdProperty("ironPipe.id",
-							DefaultProps.IRON_PIPE_ID);
-			Property goldenPipeId = BuildCraftCore.mainConfiguration
-					.getOrCreateBlockIdProperty("goldenPipe.id",
-							DefaultProps.GOLDEN_PIPE_ID);
-			Property diamondPipeId = BuildCraftCore.mainConfiguration
-					.getOrCreateBlockIdProperty("diamondPipe.id",
-							DefaultProps.DIAMOND_PIPE_ID);
-			Property obsidianPipeId = BuildCraftCore.mainConfiguration
-					.getOrCreateBlockIdProperty("obsidianPipe.id",
-							DefaultProps.OBSIDIAN_PIPE_ID);
-			Property cobblestonePipeId = BuildCraftCore.mainConfiguration
-					.getOrCreateBlockIdProperty("cobblestonePipe.id",
-							DefaultProps.COBBLESTONE_PIPE_ID);
-
-			CoreProxy.registerBlock(new LegacyBlock(Integer
-					.parseInt(woodenPipeId.value), pipeItemsWood.shiftedIndex));
-			CoreProxy.registerBlock(new LegacyBlock(Integer
-					.parseInt(stonePipeId.value), pipeItemsStone.shiftedIndex));
-			CoreProxy.registerBlock(new LegacyBlock(Integer
-					.parseInt(ironPipeId.value), pipeItemsIron.shiftedIndex));
-			CoreProxy.registerBlock(new LegacyBlock(Integer
-					.parseInt(goldenPipeId.value), pipeItemsGold.shiftedIndex));
-			CoreProxy.registerBlock(new LegacyBlock(Integer
-					.parseInt(diamondPipeId.value), pipeItemsDiamond.shiftedIndex));
-			CoreProxy.registerBlock(new LegacyBlock(Integer
-					.parseInt(obsidianPipeId.value), pipeItemsObsidian.shiftedIndex));
-			CoreProxy.registerBlock(new LegacyBlock(Integer
-					.parseInt(cobblestonePipeId.value), pipeItemsCobblestone.shiftedIndex));
-
-			CoreProxy.registerTileEntity(LegacyTile.class,
-							"net.buildcraft.src.buildcraft.transport.legacy.LegacyTile");
-		}
-
-		BuildCraftCore.mainConfiguration.save();
-
-		new BptBlockPipe (genericPipeBlock.blockID);
-
-		BuildCraftCore.itemBptProps [pipeItemsWood.shiftedIndex] = new BptItemPipeWodden();
-		BuildCraftCore.itemBptProps [pipeLiquidsWood.shiftedIndex] = new BptItemPipeWodden();
-		BuildCraftCore.itemBptProps [pipeItemsIron.shiftedIndex] = new BptItemPipeIron();
-		BuildCraftCore.itemBptProps [pipeLiquidsIron.shiftedIndex] = new BptItemPipeIron();
-		BuildCraftCore.itemBptProps [pipeItemsDiamond.shiftedIndex] = new BptItemPipeDiamond();
+                } else if(name.equals("pipeGateAutarchic")) {
+                    pipeGateAutarchic = new ItemGate(id - 256, 1).setIconIndex(2 * 16 + 3);
+                    pipeGateAutarchic.setItemName("pipeGateAutarchic");
+                }
+            }
+        };
+        
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "redPipeWire", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "bluePipeWire", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "greenPipeWire", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "yellowPipeWire", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeGate", idc);
+        MinecraftForge.registerItemID(mod_BuildCraftTransport.instance, "pipeGateAutarchic", idc);
 
 		BuildCraftAPI.registerTriggerProvider(new PipeTriggerProvider());
 
-
-		if (BuildCraftCore.loadDefaultRecipes)
-			loadRecipes();
+		MinecraftForge.addRecipeCallback(new Runnable() {
+		    public void run() {
+		        new BptBlockPipe (genericPipeBlock.blockID);
+		        
+		        if (BuildCraftCore.loadDefaultRecipes)
+		            loadRecipes();
+		        loadAssemblyRecipes();
+		    }
+		});
+	}
+	
+	public static void loadAssemblyRecipes() {
+	    BuildCraftCore.assemblyRecipes.add(new AssemblyRecipe(new ItemStack[] {
+                new ItemStack(Item.dyePowder, 1, 1),
+                new ItemStack(Item.redstone, 1),
+                new ItemStack(Item.ingotIron, 1) }, 500, new ItemStack(
+                redPipeWire, 8)));
+	    BuildCraftCore.assemblyRecipes.add(new AssemblyRecipe(new ItemStack[] {
+                new ItemStack(Item.dyePowder, 1, 4),
+                new ItemStack(Item.redstone, 1),
+                new ItemStack(Item.ingotIron, 1) }, 500, new ItemStack(
+                bluePipeWire, 8)));
+	    BuildCraftCore.assemblyRecipes.add(new AssemblyRecipe(new ItemStack[] {
+                new ItemStack(Item.dyePowder, 1, 2),
+                new ItemStack(Item.redstone, 1),
+                new ItemStack(Item.ingotIron, 1) }, 500, new ItemStack(
+                greenPipeWire, 8)));
+	    BuildCraftCore.assemblyRecipes.add(new AssemblyRecipe(new ItemStack[] {
+                new ItemStack(Item.dyePowder, 1, 11),
+                new ItemStack(Item.redstone, 1),
+                new ItemStack(Item.ingotIron, 1) }, 500, new ItemStack(
+                yellowPipeWire, 8)));
 	}
 
 	public static void loadRecipes () {
@@ -361,15 +410,10 @@ public class BuildCraftTransport {
 				craftingmanager.addRecipe(p.result, p.input);
 	}
 
-	private static Item createPipe (int defaultID, Class <? extends Pipe> clas, String descr, Object ingredient1, Object ingredient2, Object ingredient3) {
+	private static Item createPipe (int id, Class <? extends Pipe> clas, String descr, Object ingredient1, Object ingredient2, Object ingredient3) {
 		String name = Character.toLowerCase(clas.getSimpleName().charAt(0))
 				+ clas.getSimpleName().substring(1);
 
-		Property prop = BuildCraftCore.mainConfiguration
-				.getOrCreateIntProperty(name + ".id",
-						Configuration.CATEGORY_ITEM, defaultID);
-
-		int id = Integer.parseInt(prop.value);
 		Item res =  BlockGenericPipe.registerPipe (id, clas);
 		res.setItemName(clas.getSimpleName());
 		CoreProxy.addName(res, descr);
