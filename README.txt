@@ -1,0 +1,1 @@
+This is BuildCraft (SVN version) ported to use the new Forge ID assignment system as an example and for testing.
